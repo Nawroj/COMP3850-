@@ -29,3 +29,7 @@ follow the instruction:
 6. Run the File.
 
 Everytime you run it this should clear the previous table and update it with new ones.
+
+To See the Tables and make Queries:
+1. "Your Database Name"-> Database -> postgres -> Schemas -> public -> Tables -> indicators
+2. Right click on the indicators and click on View/edit Data.
