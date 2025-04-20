@@ -9,6 +9,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from typing import List, Optional
+import logging
 
 load_dotenv()
 
@@ -54,6 +55,10 @@ class Threat(BaseModel):
     source: str
     timestamp: Optional[datetime]
     listing_reason: Optional[str]
+
+class SourceCount(BaseModel):
+    source: str
+    count: int
 
 # JWT functions
 def create_access_token(data: dict):
@@ -114,20 +119,17 @@ async def get_threat_hashes(current_user: User = Depends(get_current_user)):
 @app.get("/threat_ip_count")
 async def get_threat_ip_count(current_user: User = Depends(get_current_user)):
     try:
-        # Directly count the rows where the type is 'IP'
         response = supabase.table("indicators").select("value", count="exact").eq("type", "IP").execute()
-        ip_count = response.count  # This gives the exact count of matching rows
+        ip_count = response.count
         return {"ip_count": ip_count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving IP count: {str(e)}")
 
-
 @app.get("/threat_domain_count")
 async def get_threat_domain_count(current_user: User = Depends(get_current_user)):
     try:
-        # Count the rows where the type is 'Domain'
         response = supabase.table("indicators").select("value", count="exact").eq("type", "Domain").execute()
-        domain_count = response.count  # Get the exact count of domain rows
+        domain_count = response.count
         return {"domain_count": domain_count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving domain count: {str(e)}")
@@ -135,22 +137,28 @@ async def get_threat_domain_count(current_user: User = Depends(get_current_user)
 @app.get("/threat_url_count")
 async def get_threat_url_count(current_user: User = Depends(get_current_user)):
     try:
-        # Count the rows where the type is 'URL'
         response = supabase.table("indicators").select("value", count="exact").eq("type", "URL").execute()
-        url_count = response.count  # Get the exact count of URL rows
+        url_count = response.count
         return {"url_count": url_count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving URL count: {str(e)}")
-    
+
 @app.get("/threat_hash_count")
 async def get_threat_hash_count(current_user: User = Depends(get_current_user)):
     try:
-        # Count the rows where the type is 'Hash'
         response = supabase.table("indicators").select("value", count="exact").eq("type", "Hash").execute()
-        hash_count = response.count  # Get the exact count of hash rows
+        hash_count = response.count
         return {"hash_count": hash_count}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving hash count: {str(e)}")   
+        raise HTTPException(status_code=500, detail=f"Error retrieving hash count: {str(e)}")
+
+@app.get("/source_count", response_model=List[SourceCount])
+async def get_source_counts(current_user: User = Depends(get_current_user)):
+    try:
+        response = supabase.table("source_counts").select("*").execute()
+        return response.data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving source counts: {str(e)}")
 
 @app.get("/geocode/{ip}")
 async def geocode_ip(ip: str, current_user: User = Depends(get_current_user)):
@@ -167,7 +175,6 @@ async def refresh_feeds(current_user: User = Depends(get_current_user)):
 
 @app.post("/users")
 async def create_user(user: UserCreate, current_user: User = Depends(get_current_user)):
-    
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admins only")
     try:
