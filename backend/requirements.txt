@@ -1,0 +1,7 @@
+fastapi==0.103.0
+uvicorn==0.23.2
+supabase==2.0.0
+python-jwt==4.0.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.0
+requests==2.31.0
