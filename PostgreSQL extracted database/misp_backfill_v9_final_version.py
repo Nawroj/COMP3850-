@@ -231,6 +231,6 @@ for start in range(0, total, CSV_CHUNK):
         )
     conn.commit()
 
-cur.close()
-conn.close()
+cur.execute("UPDATE sync_state SET last_run = %s WHERE id=1", (datetime.now(timezone.utc),))
+conn.commit()
 print("Backfill complete.")
