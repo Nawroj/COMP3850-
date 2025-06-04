@@ -25,6 +25,7 @@ DB_PARAMS = dict(
 )
 
 # ─── TUNABLES ────────────────────────────────────────────────────────────────
+limit = 100000  # Safe default; adjust based on your memory constraints
 INTERVAL_H = 4
 EV_BATCH   = 500
 CSV_CHUNK  = 10_000
@@ -102,15 +103,31 @@ ATTR_COLS = [
 
 
 # ─── FETCH DELTA ATTRIBUTES ────────────────────────────────────────────────
-resp = session.post(
-  f"{MISP_URL}/attributes/restSearch",
-  json={"returnFormat":"json","timestamp":since_ts,
-        "includeRelatedAttributes": True,
-        "includeObjectRefs": True},
-  verify=VERIFY_CERT
-)
-resp.raise_for_status()
-attrs = resp.json().get("response",{}).get("Attribute",[])
+
+attrs = []
+page = 1
+
+
+while True:
+    print(f"→ Fetching page {page}...")
+    resp = session.post(
+        f"{MISP_URL}/attributes/restSearch",
+        json={
+          "returnFormat":"json","timestamp": since_ts, "page":page,"limit":limit,
+          "includeRelatedAttributes": True,
+          "includeObjectRefs": True
+        },
+        verify=VERIFY_CERT
+    )
+    resp.raise_for_status()
+    batch = resp.json().get("response", {}).get("Attribute", [])
+    if not batch:
+        break
+    attrs.extend(batch)
+    if len(batch) < limit:
+        break  # Last page
+    page += 1
+
 print(f" → Retrieved {len(attrs)} attributes")
 if not attrs:
     print("No updates"); cur.close(); conn.close(); exit(0)
