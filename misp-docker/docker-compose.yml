@@ -89,8 +89,8 @@ services:
       start_period: 30s
       start_interval: 30s
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
+      - "8443:443"
     volumes:
       - "./configs/:/var/www/MISP/app/Config/"
       - "./logs/:/var/www/MISP/app/tmp/logs/"
@@ -262,8 +262,8 @@ services:
         - MODULES_FLAVOR=${MODULES_FLAVOR:-full}
     healthcheck:
       test: "/bin/bash -c '</dev/tcp/localhost/6666'"
-      interval: 2s
-      timeout: 1s
+      interval: 30s
+      timeout: 10s
       retries: 3
       start_period: 5s
       start_interval: 5s
